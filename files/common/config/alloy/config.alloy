@@ -1,0 +1,57 @@
+// 1. Define the destination (Loki)
+loki.write "local_loki" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// 2. Discover Besu log files
+local.file_match "besu_files" {
+  path_targets = [
+    { "__path__" = "/var/log/besu/*.log", "job" = "besu" },
+  ]
+  sync_period = "10s"
+}
+
+// 3. Process the JSON logs
+loki.process "besu_pipeline" {
+  forward_to = [loki.write.local_loki.receiver]
+
+  // Extract fields from the Besu JSON log format
+  stage.json {
+    expressions = {
+      timestamp = "timestamp",
+      level     = "level",
+      container = "container",
+      message   = "message",
+      class     = "class",
+      thread    = "thread",
+      throwable = "throwable",
+    }
+  }
+
+  // Turn important fields into searchable labels
+  stage.labels {
+    values = {
+      level     = "level",
+      container = "container",
+    }
+  }
+
+  // Use the timestamp from the log itself instead of the ingest time
+  stage.timestamp {
+    source = "timestamp"
+    format = "RFC3339"
+  }
+  
+  // Clean up the output: make the 'message' the main log line
+  stage.output {
+    source = "message"
+  }
+}
+
+// 4. Start the scrape
+loki.source.file "besu_scraper" {
+  targets    = local.file_match.besu_files.targets
+  forward_to = [loki.process.besu_pipeline.receiver]
+}
