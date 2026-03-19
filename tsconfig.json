@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ESNext"],
+    
+    "outDir": "./build",
+    "rootDir": "./src",
+    
+    /* ADD THESE TWO LINES */
+    "checkJs": false,
+    "maxNodeModuleJsDepth": 0,
+
+    "strict": true,
+    "useUnknownInCatchVariables": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "downlevelIteration": true
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules", 
+    "build", 
+    "files/common/**"
+  ]
+}
