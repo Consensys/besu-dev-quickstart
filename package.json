@@ -1,5 +1,5 @@
 {
-  "name": "besu-dev-quickstart",
+  "name": "@consensys-software/besu-dev-quickstart",
   "version": "0.1.0",
   "description": "A utility that lets developers try out Besu for private or public networks",
   "main": "build/index.js",
@@ -9,6 +9,9 @@
     "Joshua Fernandes <3722503+joshuafernandes@users.noreply.github.com>"
   ],
   "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "private": false,
   "bin": {
     "besu-quickstart": "./build/index.js"
