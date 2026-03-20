@@ -29,20 +29,20 @@ export async function buildNetwork(context: NetworkContext): Promise<void> {
         const commonFilesPath = path.resolve(filesDirPath, "common");
         const networkFilesPath = path.resolve(filesDirPath, context.networkType);
 
-        if (validateDirectoryExists(commonTemplatePath)) {
-            renderTemplateDir(commonTemplatePath, context);
-        }
-
-        if (validateDirectoryExists(networkTypeTemplatePath)) {
-            renderTemplateDir(networkTypeTemplatePath, context);
-        }
-
         if (validateDirectoryExists(commonFilesPath)) {
             copyFilesDir(commonFilesPath, context);
         }
 
         if (validateDirectoryExists(networkFilesPath)) {
             copyFilesDir(networkFilesPath, context);
+        }
+
+        if (validateDirectoryExists(commonTemplatePath)) {
+            renderTemplateDir(commonTemplatePath, context);
+        }
+
+        if (validateDirectoryExists(networkTypeTemplatePath)) {
+            renderTemplateDir(networkTypeTemplatePath, context);
         }
 
         await spinner.succeed(`Installation complete.`);

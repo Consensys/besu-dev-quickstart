@@ -54,11 +54,9 @@ What type of network would you like the client to run? Default: [1]
     1. Private
     2. Public
 
-Do you wish to enable support for monitoring and logging with the Grafana Observability stack or Splunk? Default: [1]
-    1. Grafana Stack
-    2. Splunk
+Add Otel Collector spans to Grafana? Default: [N/y]
  
-Do you wish to enable support for monitoring your network with Chainlens? [N/y]
+Do you wish to enable the Chainlens explorer? [N/y]
  
 Where should we create the config files for this network? Please
 choose either an empty directory, or a path to a new directory that does
@@ -74,7 +72,7 @@ $> cd besu-test-network
 Alternatively, you can use cli options and skip the prompt above like so:
 
 ```
-npx besu-dev-quickstart --networkType private --outputPath ./besu-test-network --monitoring default --chainlens false
+npx besu-dev-quickstart --networkType private --outputPath ./besu-test-network --otel false --chainlens false
 ```
 
 **To start services and the network:**

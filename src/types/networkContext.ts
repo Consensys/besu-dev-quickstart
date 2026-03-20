@@ -2,7 +2,7 @@
 export interface NetworkContext {
     networkType: "private" | "public";
     nodeCount: number;
-    monitoring: "grafana" | "splunk";
+    otel: boolean;
     chainlens: boolean;
     outputPath: string;
 }

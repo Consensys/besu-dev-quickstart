@@ -28,14 +28,14 @@ export async function main(): Promise<void> {
       console.log("Using the cli ...");  
       const args = await yargs(process.argv.slice(2)).options({
         networkType: { type: 'string', demandOption: true, choices:['public','private'], describe: 'Type of network to use.' },
-        monitoring: { type: 'string', demandOption: false, default: 'loki', describe: 'Enable support for monitoring with Grafana stack or Splunk.' },
-        chainlens: { type: 'boolean', demandOption: false, default: false, describe: 'Enable support for monitoring the network with Chainlens' },
+        otel: { type: 'boolean', demandOption: false, default: false, describe: 'Add Otel Collector spans to Grafana.' },
+        chainlens: { type: 'boolean', demandOption: false, default: false, describe: 'Enable the Chainlens explorer.' },
         outputPath: { type: 'string', demandOption: false, default: './besu-test-network', describe: 'Location for config files.'}
       }).argv;
 
       answers = {
         networkType: args.networkType,
-        monitoring: args.monitoring,
+        otel: args.otel,
         chainlens: args.chainlens,
         outputPath: args.outputPath,
       };

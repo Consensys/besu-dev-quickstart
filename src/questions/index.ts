@@ -73,19 +73,16 @@ const _outputDirQuestion: QuestionTree = {
 
 const _chainlensQuestion: QuestionTree = {
     name: "chainlens",
-    prompt: "Do you wish to enable support for monitoring your network with Chainlens? [N/y]",
+    prompt: "Do you wish to enable the Chainlens explorer? [N/y]",
 };
 // have to add this below the definition because of the self reference..
 _chainlensQuestion.transformerValidator = _getYesNoValidator(_chainlensQuestion, _outputDirQuestion, "n");
 
-const _monitoringQuestion: QuestionTree = {
-    name: "monitoring",
-    prompt: "Do you wish to enable support for monitoring and logging with the Grafana Observability stack or Splunk? Default: [1]",
-    options: [
-      { label: "Grafana Stack", value: "grafana", nextQuestion: _chainlensQuestion, default: true },
-      { label: "Splunk", value: "splunk", nextQuestion: _chainlensQuestion },
-    ]
+const _otelQuestion: QuestionTree = {
+    name: "otel",
+    prompt: "Add Otel Collector spans to Grafana? Default: [N/y]",
 };
+_otelQuestion.transformerValidator = _getYesNoValidator(_otelQuestion, _chainlensQuestion, "n");
 
 const bannerText = String.raw`
          ____                                         
@@ -116,8 +113,8 @@ export const rootQuestion: QuestionTree = {
     name: "networkType",
     prompt: `${bannerText}${leadInText}What type of network would you like the client to run? Default: [1]`,
     options: [
-        { label: "Private", value: "private", nextQuestion: _monitoringQuestion, default: true },
-        { label: "Public", value: "public", nextQuestion: _monitoringQuestion }
+        { label: "Private", value: "private", nextQuestion: _otelQuestion, default: true },
+        { label: "Public", value: "public", nextQuestion: _otelQuestion }
     ]
 };
 

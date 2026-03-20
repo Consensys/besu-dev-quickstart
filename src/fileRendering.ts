@@ -64,10 +64,6 @@ export function renderFileToDir(basePath: string, filePath: string, context: Net
         throw new Error(`The template does not exist at '${templatePath}'.`);
     }
 
-    if (_validateFileExists(outputPath)) {
-        throw new Error(`It appears that an output file already exists at '${outputPath}'. Aborting.`);
-    }
-
     const mode = fs.statSync(templatePath).mode;
     const templateSrc = fs.readFileSync(templatePath, "utf-8");
     const output = renderString(templateSrc, context).replace(/(\r\n|\n|\r)/gm, os.EOL);
