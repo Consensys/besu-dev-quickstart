@@ -64,20 +64,16 @@ not yet exist. Default: ./besu-test-network
 
 Once completed, change directory to the artifacts folder: 
 
-```
+```bash
 $> cd besu-test-network
+besu-test-network $> ./run.sh
 ``` 
-
 
 Alternatively, you can use cli options and skip the prompt above like so:
 
-```
+```bash
 npx besu-dev-quickstart --networkType private --outputPath ./besu-test-network --otel false --chainlens false
 ```
-
-**To start services and the network:**
-
-Follow the README.md file of select artifact
 
 ## Troubleshooting
 
@@ -86,7 +82,7 @@ Follow the README.md file of select artifact
 The `besu` containers use user `besu` mapped to user:group 1000. On your local machine, if your userid is not 1000, you will see this error. To fix this either run as user 1000 or map
 the container's user 1000 to your local user id so permissions will work like so in the compose file
 
-```
+```bash
 image: some:img
 user: $(id -u):$(id -g)
 ```

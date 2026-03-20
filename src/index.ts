@@ -28,6 +28,7 @@ export async function main(): Promise<void> {
       console.log("Using the cli ...");  
       const args = await yargs(process.argv.slice(2)).options({
         networkType: { type: 'string', demandOption: true, choices:['public','private'], describe: 'Type of network to use.' },
+        networkName: { type: 'string', demandOption: true, choices:['private','mainnet','hoodi','sepolia'], describe: 'Which network to use.' },
         otel: { type: 'boolean', demandOption: false, default: false, describe: 'Add Otel Collector spans to Grafana.' },
         chainlens: { type: 'boolean', demandOption: false, default: false, describe: 'Enable the Chainlens explorer.' },
         outputPath: { type: 'string', demandOption: false, default: './besu-test-network', describe: 'Location for config files.'}
@@ -35,6 +36,7 @@ export async function main(): Promise<void> {
 
       answers = {
         networkType: args.networkType,
+        networkName: args.networkName,
         otel: args.otel,
         chainlens: args.chainlens,
         outputPath: args.outputPath,

@@ -305,7 +305,6 @@ volumes:
   prometheus:
   grafana:
   alloy:
-  ethlogger:
   tempo:
   
 networks:

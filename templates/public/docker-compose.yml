@@ -1,0 +1,156 @@
+---
+
+services:
+
+  init:
+    container_name: init
+    image: ubuntu:22.04
+    network_mode: host
+    user: root
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        apt-get update -qq && apt-get install -y -qq --no-install-recommends curl ca-certificates
+        openssl rand -hex 32 | tr -d "\n" > /tmp/init/token.txt
+        chmod 644 /tmp/init/token.txt
+        curl -sf --retry 3 --retry-delay 2 https://api.ipify.org | tr -d '[:space:]' > /tmp/init/public-ip.txt
+        chmod 644 /tmp/init/public-ip.txt
+        test -s /tmp/init/public-ip.txt
+    volumes:
+      - init-data:/tmp/init
+    restart: "no"
+
+  besu:
+    container_name: besu
+    restart: "on-failure"
+    image: hyperledger/besu:${BESU_VERSION:-latest}
+    network_mode: host
+    env_file:
+      - ./config/besu/.env
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        PUBLIC_IP=$$(cat /tmp/init/public-ip.txt)
+        /opt/besu/bin/besu \
+        --sync-mode=SNAP \
+        --network={{ networkName }} \
+        --data-path=/data/ \
+        --host-allowlist="*" \
+        --p2p-host=$${PUBLIC_IP} \
+        --metrics-enabled=true \
+        --metrics-host=0.0.0.0 \
+        --metrics-port=9545 \
+        --rpc-http-enabled \
+        --rpc-http-cors-origins="*" \
+        --rpc-http-api=ETH,NET,DEBUG,NET,PERM,ADMIN,TXPOOL,WEB3 \
+        --engine-jwt-secret=/tmp/init/token.txt \
+        --engine-host-allowlist="*" \
+        --engine-rpc-enabled=true
+
+    ports:
+      - 8545:8545
+      - 8551:8551
+      - 30303:30303
+      - 9545:9545
+    volumes:
+      - ./config/besu/:/config
+      - ./data/besu:/data
+      - ./logs/besu:/tmp/besu
+      - init-data:/tmp/init:ro
+    depends_on:
+      init:
+        condition: service_completed_successfully
+
+  nimbus:
+    container_name: nimbus
+    restart: "on-failure"
+    image: statusim/nimbus-eth2:multiarch-latest
+    network_mode: host
+    entrypoint:
+      - /bin/bash
+      - -c
+      - |
+        PUBLIC_IP=$$(cat /tmp/init/public-ip.txt)
+        /home/user/nimbus_beacon_node \
+        --network={{ networkName }} \
+        --data-dir=/data \
+        --jwt-secret=/tmp/init/token.txt \
+        --el=http://127.0.0.1:8551 \
+        --nat=extip:$${PUBLIC_IP} \
+        --tcp-port=9000 \
+        --udp-port=9000 \
+        --rest \
+        --rest-address=0.0.0.0 \
+        --metrics-port=8008 \
+        --metrics-address=0.0.0.0 \
+        --log-file=/tmp/nimbus/nimbus.log
+    ports:
+      - 9000
+      - 5051
+      - 8008:8008
+    volumes:
+      - ./data/nimbus:/data
+      - ./logs/nimbus:/tmp/nimbus
+      - init-data:/tmp/init:ro
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      besu:
+        condition: service_started
+
+  prometheus:
+    image: "prom/prometheus:v3.10.0"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"    
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+    ports:
+      - 9090:9090/tcp
+
+  grafana:
+    image: "grafana/grafana:12.3"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_USERS_VIEWERS_CAN_EDIT=true
+    volumes:
+      - ./config/grafana/provisioning/:/etc/grafana/provisioning/
+      - grafana:/var/lib/grafana
+    ports:
+      - 3000:3000/tcp
+
+  loki:
+    image: "grafana/loki:3.5.12"
+    volumes:
+      - ./config/loki/loki.yml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - 3100:3100/tcp
+
+  alloy:
+    image: "grafana/alloy:latest"
+    ports:
+      - 12345:12345/tcp
+    volumes:
+      - ./logs/besu:/var/log/besu:ro
+      - ./logs/nimbus:/var/log/nimbus:ro
+      - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - alloy:/var/lib/alloy/data
+    command: 
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+
+volumes:
+  prometheus:
+  grafana:
+  alloy:
+  init-data:
+  
+

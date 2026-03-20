@@ -1,11 +1,13 @@
-// 1. Define the destination (Loki)
+// 1. Define the shared destination (Loki)
 loki.write "local_loki" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"
   }
 }
 
-// 2. Discover Besu log files
+// ==========================================
+// 2. BESU PIPELINE 
+// ==========================================
 local.file_match "besu_files" {
   path_targets = [
     { "__path__" = "/var/log/besu/*.log", "job" = "besu" },
@@ -13,7 +15,7 @@ local.file_match "besu_files" {
   sync_period = "10s"
 }
 
-// 3. Process the JSON logs
+// Process the JSON logs
 loki.process "besu_pipeline" {
   forward_to = [loki.write.local_loki.receiver]
 
@@ -50,8 +52,37 @@ loki.process "besu_pipeline" {
   }
 }
 
-// 4. Start the scrape
+// Start the scrape
 loki.source.file "besu_scraper" {
   targets    = local.file_match.besu_files.targets
   forward_to = [loki.process.besu_pipeline.receiver]
+}
+
+// ==========================================
+// 3. NIMBUS PIPELINE 
+// ==========================================
+local.file_match "nimbus_files" {
+  path_targets = [
+    { "__path__" = "/var/log/nimbus/*.log", "job" = "nimbus" },
+  ]
+}
+
+loki.process "nimbus_pipeline" {
+  forward_to = [loki.write.local_loki.receiver]
+
+  // Use regex to parse the text format since Nimbus isn't JSON
+  stage.regex {
+    expression = "^(?P<level>[A-Z]{3})\\s+(?P<timestamp>\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2}\\.\\d{3}[+-]\\d{2}:\\d{2})\\s+(?P<content>.*)$"
+  }
+
+  stage.labels {
+    values = { level = "level" }
+  }
+  
+  stage.output { source = "content" }
+}
+
+loki.source.file "nimbus_scraper" {
+  targets    = local.file_match.nimbus_files.targets
+  forward_to = [loki.process.nimbus_pipeline.receiver]
 }
