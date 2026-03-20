@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { rootQuestion } from "./questions/index.js";
 import { fileURLToPath } from 'url';
 import { QuestionRenderer } from "./questionRenderer.js";

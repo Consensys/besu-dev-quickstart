@@ -10,12 +10,8 @@ To run these tutorials, you must have the following installed:
 
 - [Docker and Docker-compose](https://docs.docker.com/compose/install/) v2 or higher
 
-| ⚠️ **Note**: If on MacOS or Windows, please ensure that you allow docker to use upto 4G of memory
-or 6G if running the Private network setup, and approx twice that amount for the Public network setup.
-The [Docker for Mac](https://docs.docker.com/docker-for-mac/) and
-[Docker Desktop](https://docs.docker.com/docker-for-windows/) sites have details on how to allocate
-system resources.      |
-| ---                                                                                                                                                                                                                                                                                                                                                                           |
+| ⚠️ **Note**: If on MacOS or Windows, please ensure that you allow docker to use upto 4G of memory or 6G if running the Private network setup, and approx twice that amount for the public network setup. The [Docker for Mac](https://docs.docker.com/docker-for-mac/) and [Docker Desktop](https://docs.docker.com/docker-for-windows/) sites have details on how to allocate system resources            |
+| ---                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 
 | ⚠️ **Note**: This has only been tested on Windows 11 25H2, WSL2 and Docker                                                                                                                                                  |
