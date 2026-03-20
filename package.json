@@ -1,6 +1,6 @@
 {
   "name": "@consensys-software/besu-dev-quickstart",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A utility that lets developers try out Besu for private or public networks",
   "main": "build/index.js",
   "type": "module",
@@ -13,9 +13,7 @@
     "access": "public"
   },
   "private": false,
-  "bin": {
-    "besu-quickstart": "./build/index.js"
-  },
+  "bin": "./index.js",
   "scripts": {
     "build": "tsc",
     "lint": "eslint .",
