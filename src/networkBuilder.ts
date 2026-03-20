@@ -11,10 +11,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * @param context
  */
 export async function buildNetwork(context: NetworkContext): Promise<void> {
-    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-    console.log(context);
-    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-
+    // console.log(context);
+    
     const templatesDirPath = path.resolve(__dirname, "..", "templates");
     const filesDirPath = path.resolve(__dirname, "..", "files");
     const spinner = new Spinner("");
@@ -49,7 +47,6 @@ export async function buildNetwork(context: NetworkContext): Promise<void> {
 
         console.log();
         console.log(`To start your test network, run 'run.sh' in the directory, '${context.outputPath}'`);
-        console.log(`For more information on the test network, see 'README.md' in the directory, '${context.outputPath}'`);
     } catch (err) {
         if (spinner.isRunning) {
             await spinner.fail(`Installation failed. Error: ${(err as Error).message}`);

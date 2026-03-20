@@ -28,10 +28,15 @@ export async function main(): Promise<void> {
       console.log("Using the cli ...");  
       const args = await yargs(process.argv.slice(2)).options({
         networkType: { type: 'string', demandOption: true, choices:['public','private'], describe: 'Type of network to use.' },
-        networkName: { type: 'string', demandOption: true, choices:['private','mainnet','hoodi','sepolia'], describe: 'Which network to use.' },
-        otel: { type: 'boolean', demandOption: false, default: false, describe: 'Add Otel Collector spans to Grafana.' },
-        chainlens: { type: 'boolean', demandOption: false, default: false, describe: 'Enable the Chainlens explorer.' },
+        networkName: { type: 'string', demandOption: false, choices:['mainnet','hoodi','sepolia'], describe: 'Public network to connect to (required when networkType is public).' },
+        otel: { type: 'boolean', demandOption: false, default: false, describe: 'Add Otel Collector spans to Grafana (private only).' },
+        chainlens: { type: 'boolean', demandOption: false, default: false, describe: 'Enable the Chainlens explorer (private only).' },
         outputPath: { type: 'string', demandOption: false, default: './besu-test-network', describe: 'Location for config files.'}
+      }).check((argv) => {
+        if (argv.networkType === 'public' && !argv.networkName) {
+          throw new Error('--networkName is required when --networkType is public');
+        }
+        return true;
       }).argv;
 
       answers = {

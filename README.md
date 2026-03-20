@@ -10,7 +10,11 @@ To run these tutorials, you must have the following installed:
 
 - [Docker and Docker-compose](https://docs.docker.com/compose/install/) v2 or higher
 
-| ⚠️ **Note**: If on MacOS or Windows, please ensure that you allow docker to use upto 4G of memory or 6G if running Privacy examples under the _Resources_ section. The [Docker for Mac](https://docs.docker.com/docker-for-mac/) and [Docker Desktop](https://docs.docker.com/docker-for-windows/) sites have details on how to do this at the "Resources" heading       |
+| ⚠️ **Note**: If on MacOS or Windows, please ensure that you allow docker to use upto 4G of memory
+or 6G if running the Private network setup, and approx twice that amount for the Public network setup.
+The [Docker for Mac](https://docs.docker.com/docker-for-mac/) and
+[Docker Desktop](https://docs.docker.com/docker-for-windows/) sites have details on how to allocate
+system resources.      |
 | ---                                                                                                                                                                                                                                                                                                                                                                           |
 
 
@@ -56,7 +60,7 @@ What type of network would you like the client to run? Default: [1]
 
 Add Otel Collector spans to Grafana? Default: [N/y]
  
-Do you wish to enable the Chainlens explorer? [N/y]
+Do you wish to enable the Chainlens explorer? Default: [N/y]
  
 Where should we create the config files for this network? Please
 choose either an empty directory, or a path to a new directory that does
@@ -86,3 +90,9 @@ the container's user 1000 to your local user id so permissions will work like so
 image: some:img
 user: $(id -u):$(id -g)
 ```
+
+### Deleting the 'data' folder for volumes
+
+Containers run as the default users and we do not alter them. If you run into issues deleting the 
+`data` folder, you will need to use `sudo` permissions to do that.
+

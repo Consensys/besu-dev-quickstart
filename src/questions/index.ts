@@ -73,7 +73,7 @@ const _outputDirQuestion: QuestionTree = {
 
 const _chainlensQuestion: QuestionTree = {
     name: "chainlens",
-    prompt: "(Private ONLY) Do you wish to enable the Chainlens explorer? [N/y]",
+    prompt: "Do you wish to enable the Chainlens explorer? Default: [N/y]",
 };
 // have to add this below the definition because of the self reference..
 _chainlensQuestion.transformerValidator = _getYesNoValidator(_chainlensQuestion, _outputDirQuestion, "n");
@@ -86,12 +86,11 @@ _otelQuestion.transformerValidator = _getYesNoValidator(_otelQuestion, _chainlen
 
 const _networkNameQuestion: QuestionTree = {
     name: "networkName",
-    prompt: "(Public ONLY) Which network do you want to connect to? Default: [1]",
+    prompt: "Which public network do you want to connect to? Default: [1]",
     options: [
-      { label: "Private", value: "private", nextQuestion: _otelQuestion, default: true },
-      { label: "Mainnet", value: "mainnet", nextQuestion: _otelQuestion },
-      { label: "Hoodi", value: "hoodi", nextQuestion: _otelQuestion },
-      { label: "Sepolia", value: "sepolia", nextQuestion: _otelQuestion }
+      { label: "Mainnet", value: "mainnet", nextQuestion: _outputDirQuestion, default: true },
+      { label: "Hoodi", value: "hoodi", nextQuestion: _outputDirQuestion },
+      { label: "Sepolia", value: "sepolia", nextQuestion: _outputDirQuestion }
     ]
 };
 
@@ -125,7 +124,7 @@ export const rootQuestion: QuestionTree = {
     name: "networkType",
     prompt: `${bannerText}${leadInText}What type of network would you like the client to run? Default: [1]`,
     options: [
-        { label: "Private", value: "private", nextQuestion: _networkNameQuestion, default: true },
+        { label: "Private", value: "private", nextQuestion: _otelQuestion, default: true },
         { label: "Public", value: "public", nextQuestion: _networkNameQuestion }
     ]
 };
