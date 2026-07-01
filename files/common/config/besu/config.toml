@@ -11,11 +11,13 @@ rpc-http-enabled=true
 rpc-http-host="0.0.0.0"
 rpc-http-port=8545
 rpc-http-cors-origins=["*"]
+rpc-http-api=["WEB3","ETH","NET","TRACE","DEBUG","ADMIN","TXPOOL","PERM","QBFT"]
 
 # ws
 rpc-ws-enabled=true
 rpc-ws-host="0.0.0.0"
 rpc-ws-port=8546
+rpc-ws-api=["WEB3","ETH","NET","TRACE","DEBUG","ADMIN","TXPOOL","PERM","QBFT"]
 
 # graphql
 graphql-http-enabled=true
@@ -40,3 +42,6 @@ bootnodes=["enode://8208a3f344695d44e9cf2c023683cbea7b9343e2f70a5e804bd2c93858e9
 # static nodes
 static-nodes-file="/config/static-nodes.json"
 discovery-enabled=true
+
+# required for Paladin private tx error decoding
+revert-reason-enabled=true

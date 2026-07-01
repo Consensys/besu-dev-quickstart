@@ -10,13 +10,44 @@ x-besu-def:
     - -c
     - |
 
-      cp "/config/${BESU_CONS_ALGO:-QBFT}genesis.json" /config/genesis.json
-
       /opt/besu/bin/besu \
       --config-file=/config/config.toml \
-      --p2p-host=$$(hostname -i) \
-      --rpc-http-api=WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} \
-      --rpc-ws-api=WEB3,ETH,NET,TRACE,DEBUG,ADMIN,TXPOOL,PERM,${BESU_CONS_ALGO:-QBFT} ;
+      --p2p-host=$$(hostname -i) ;
+
+x-paladin-def:
+  &paladin-def
+  image: ghcr.io/lfdt-paladin/paladin:v1.0.0
+  restart: "on-failure"
+  entrypoint:
+    - /bin/sh
+    - -c
+    - |
+      rm -f /app/jna/p.*.sock
+      exec java \
+        --add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
+        --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
+        --add-opens java.base/java.nio=ALL-UNNAMED \
+        -Dio.netty.tryReflectionSetAccessible=true \
+        -Djava.io.tmpdir=/app/jna \
+        -Djna.library.path=/app/jna \
+        -jar /app/libs/paladin.jar \
+        "$@"
+    - sh
+
+x-postgres-def:
+  &postgres-def
+  image: postgres:17.6
+  command: -c 'max_connections=200'
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres"]
+    interval: 5s
+    timeout: 5s
+    retries: 10
+
+x-postgres-env:
+  &postgres-env
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: my-secret
 
 
 services:
@@ -113,9 +144,193 @@ services:
     ports:
       - 8545:8545/tcp
       - 8546:8546/tcp
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c ':> /dev/tcp/localhost/8545'"]
+      interval: 5s
+      timeout: 5s
+      retries: 20      
     networks:
       besu-dev-quickstart:
         ipv4_address: 172.16.239.15
+
+
+{% if privacy %}
+
+
+  # Deploys the factory contracts before Paladin nodes start for pente, noto and zeto
+  # Uses the rpcnode account (config/nodes/rpcnode/accountPrivateKey) at nonce=0,
+  # so the factory address is deterministic and hardcoded in each paladin*.yaml.
+  paladin-bootstrap:
+    image: node:24-alpine
+    user: "node"
+    depends_on:
+      rpcnode:
+        condition: service_healthy
+    environment:
+      - RPC_URL=http://rpcnode:8545
+    volumes:
+      - ./smart_contracts:/app
+    working_dir: /app
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        npm install --silent
+        npm run compile
+        npx ts-node scripts/paladin_bootstrap/deploy_pente_factory.ts
+        npx ts-node scripts/paladin_bootstrap/deploy_noto_factory.ts
+        npx ts-node scripts/paladin_bootstrap/deploy_zeto_factory.ts
+      - sh    
+    networks:
+      besu-dev-quickstart:
+
+
+
+  member1-besu:
+    << : *besu-def
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=member1-besu,service.version=${BESU_VERSION:-latest}
+    labels:
+      - "consensus=besu"
+    volumes:
+      - ./config/besu/:/config
+      - ./config/nodes/member1:/opt/besu/keys
+      - ./logs/besu:/tmp/besu
+    depends_on:
+      - validator1
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.20
+
+  member1-postgres:
+    << : *postgres-def
+    environment:
+      << : *postgres-env
+      POSTGRES_DB: paladin1
+    volumes:
+      - member1-postgres:/var/lib/postgresql/data
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.21
+
+  paladin1:
+    << : *paladin-def
+    depends_on:
+      member1-postgres:
+        condition: service_healthy
+      member1-besu:
+        condition: service_started
+      paladin-bootstrap:
+        condition: service_completed_successfully
+    ports:
+      - 8548:8548
+      - 8549:8549
+    volumes:
+      - ./config/nodes/member1/paladin/paladin.yaml:/etc/paladin/config.yaml:ro
+      - ./config/nodes/member1/paladin/paladin.crt:/etc/paladin/certs/paladin.crt:ro
+      - ./config/nodes/member1/paladin/paladin.key:/etc/paladin/certs/paladin.key:ro
+    command: ["/etc/paladin/config.yaml", "engine"]
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.22
+
+  member2-besu:
+    << : *besu-def
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=member2-besu,service.version=${BESU_VERSION:-latest}
+    labels:
+      - "consensus=besu"
+    volumes:
+      - ./config/besu/:/config
+      - ./config/nodes/member2:/opt/besu/keys
+      - ./logs/besu:/tmp/besu
+    depends_on:
+      - validator1
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.23
+
+  member2-postgres:
+    << : *postgres-def
+    environment:
+      << : *postgres-env
+      POSTGRES_DB: paladin2
+    volumes:
+      - member2-postgres:/var/lib/postgresql/data
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.24
+
+  paladin2:
+    << : *paladin-def
+    depends_on:
+      member2-postgres:
+        condition: service_healthy
+      member2-besu:
+        condition: service_started
+      paladin-bootstrap:
+        condition: service_completed_successfully
+    ports:
+      - 8558:8548
+      - 8559:8549
+    volumes:
+      - ./config/nodes/member2/paladin/paladin.yaml:/etc/paladin/config.yaml:ro
+      - ./config/nodes/member2/paladin/paladin.crt:/etc/paladin/certs/paladin.crt:ro
+      - ./config/nodes/member2/paladin/paladin.key:/etc/paladin/certs/paladin.key:ro
+    command: ["/etc/paladin/config.yaml", "engine"]
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.25
+
+  member3-besu:
+    << : *besu-def
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=member3-besu,service.version=${BESU_VERSION:-latest}
+    labels:
+      - "consensus=besu"
+    volumes:
+      - ./config/besu/:/config
+      - ./config/nodes/member3:/opt/besu/keys
+      - ./logs/besu:/tmp/besu
+    depends_on:
+      - validator1
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.26
+
+  member3-postgres:
+    << : *postgres-def
+    environment:
+      << : *postgres-env
+      POSTGRES_DB: paladin3
+    volumes:
+      - member3-postgres:/var/lib/postgresql/data
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.27
+
+  paladin3:
+    << : *paladin-def
+    depends_on:
+      member3-postgres:
+        condition: service_healthy
+      member3-besu:
+        condition: service_started
+      paladin-bootstrap:
+        condition: service_completed_successfully
+    ports:
+      - 8568:8548
+      - 8569:8549
+    volumes:
+      - ./config/nodes/member3/paladin/paladin.yaml:/etc/paladin/config.yaml:ro
+      - ./config/nodes/member3/paladin/paladin.crt:/etc/paladin/certs/paladin.crt:ro
+      - ./config/nodes/member3/paladin/paladin.key:/etc/paladin/certs/paladin.key:ro
+    command: ["/etc/paladin/config.yaml", "engine"]
+    networks:
+      besu-dev-quickstart:
+        ipv4_address: 172.16.239.28
+
+{% endif %}
 
 {% if chainlens %}
 
@@ -250,6 +465,7 @@ services:
       - ./logs/besu:/var/log/besu:ro
       - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
       - alloy:/var/lib/alloy/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     command: 
       - run
       - --server.http.listen-addr=0.0.0.0:12345
@@ -306,6 +522,9 @@ volumes:
   grafana:
   alloy:
   tempo:
+  member1-postgres:
+  member2-postgres:
+  member3-postgres:
   
 networks:
   besu-dev-quickstart:

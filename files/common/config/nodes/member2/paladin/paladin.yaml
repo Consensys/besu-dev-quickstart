@@ -1,0 +1,120 @@
+log:
+  level: info
+
+nodeName: paladin2
+
+blockchain:
+  http:
+    url: http://member2-besu:8545
+  ws:
+    url: ws://member2-besu:8546
+    initialConnectAttempts: 25
+
+db:
+  type: postgres
+  postgres:
+    dsn: "postgres://postgres:my-secret@member2-postgres:5432/paladin2?sslmode=disable"
+    autoMigrate: true
+    migrationsDir: /app/db/migrations/postgres
+
+rpcServer:
+  http:
+    address: "0.0.0.0"
+    port: 8548
+  ws:
+    address: "0.0.0.0"
+    port: 8549
+
+wallets:
+  - name: wallet1
+    keySelector: .*
+    signer:
+      keyDerivation:
+        type: bip32
+      keyStore:
+        type: static
+        static:
+          keys:
+            seed:
+              encoding: hex
+              inline: 838f0a6f2a07feaa533ea2f6b812fc45f5c909414051d6c001ae551ad2ba8579
+
+domains:
+  pente:
+    # Deployed by paladin-bootstrap using rpcnode account (config/nodes/rpcnode/accountPrivateKey)
+    # at nonce=0 — address is deterministic: ethers.getCreateAddress({ from: rpcnode, nonce: 0 })
+    registryAddress: "0xBca0fDc68d9b21b5bfB16D784389807017B2bbbc"
+    plugin:
+      type: jar
+      library: /app/domains/pente.jar
+      class: io.kaleido.paladin.pente.domain.PenteDomainFactory
+    config: {}
+  noto:
+    # Proxy deployed at nonce=3 (Noto impl at 1, NotoFactory impl at 2, ERC1967Proxy at 3)
+    registryAddress: "0x9393486896D3ae612B4939afAF2C367Df17CC39B"
+    plugin:
+      type: c-shared
+      library: /app/domains/libnoto.so
+    config:
+      factoryVersion: 2
+  zeto:
+    # Proxy deployed at nonce=5 (ZetoFactory impl at 4, ERC1967Proxy at 5)
+    # Verifiers: Deposit(6), Withdraw(7), WithdrawBatch(8), Anon(9), AnonBatch(10)
+    # Zeto_Anon impl at nonce=11; registerImplementation called after all deployments
+    registryAddress: "0x49f8866d90ffDa8B12AC5677966e963acEc6d80E"
+    allowSigning: true
+    plugin:
+      type: c-shared
+      library: /app/domains/libzeto.so
+    config:
+      domainContracts:
+        implementations:
+          - name: Zeto_Anon
+            circuits:
+              deposit:
+                name: deposit
+              withdraw:
+                name: withdraw
+              transfer:
+                name: anon
+              transferLocked:
+                name: anon
+      snarkProver:
+        circuitsDir: /app/domains/zeto/zkp
+        provingKeysDir: /app/domains/zeto/zkp
+
+transports:
+  grpc:
+    plugin:
+      type: c-shared
+      library: /app/transports/libgrpc.so
+    config:
+      address: "0.0.0.0"
+      port: 9000
+      externalHostname: "paladin2"
+      directCertVerification: true
+      tls:
+        enabled: true
+        certFile: /etc/paladin/certs/paladin.crt
+        keyFile: /etc/paladin/certs/paladin.key
+
+registries:
+  peers:
+    plugin:
+      type: c-shared
+      library: /app/registries/libstatic.so
+    config:
+      entries:
+        paladin1:
+          properties:
+            transport.grpc: '{"endpoint":"dns:///paladin1:9000","issuers":"-----BEGIN CERTIFICATE-----\nMIIDBzCCAe+gAwIBAgIUT1Q/dAQ7yCzNev8FHxBRfXIauM4wDQYJKoZIhvcNAQEL\nBQAwEzERMA8GA1UEAwwIcGFsYWRpbjEwHhcNMjYwNjI0MDIxNjA3WhcNMzYwNjIx\nMDIxNjA3WjATMREwDwYDVQQDDAhwYWxhZGluMTCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBAL36fmpLuUiGNR8pXBttH4otf27ptQ4e3vEGMwOt6xqjAi8y\njbdhATQ4OZEk/JMAXWE9QvlqfIQMfjI7HmHtPMRY2FrfyP4PcgF/312cgRnXWpts\nAcmDoZfBCSs4tH9ZperoQfgBYJa40ayHjcxKsvR4pb7iL2jwC6rshDKMZlsChdkK\nMB7uV1req4PMUiHOLmw23Ake+cgRoM0j0rsHrnkvQpioxtnjPA5zPg+naRJzEi6A\nkQdF2LthOL//hQx5UcgwqC1+uCvZLTMcrgPZxyfgd2OrCqRw7gKPM3ahsZnNL7xd\n0rBU+BKHBGsjGPxUUsXYG1MsYB0mMk4Jq7XQIHMCAwEAAaNTMFEwHQYDVR0OBBYE\nFGAkiUmrjtuKKiFyWSoYKxX30C71MB8GA1UdIwQYMBaAFGAkiUmrjtuKKiFyWSoY\nKxX30C71MA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAHU6mY6x\n9JCCefA96zE8pIoEoxTmnMFXE9j7dMcR0sfpTccXQDIBeyZ48cCn/gNhTZ0+Fyv9\nnrO7fYvYwLIXSQ3BDec46CjIoLit6SrQGS1vfNSs6DYamGVX+7FnzawmQimrjhLw\nAw0q/wajAcAN0ECYU3EebS8RmzMht7q5yZu6RMj/Et7wkBTuh5mQsDn3L5/HDFO2\nGNXi3XUtSYaigRFHil26oJprpjfF5AbsMrU+ahS+Fo1IszbIEqJYMwc/jPj0CL5I\nLnp4Kv9Tv5v1+yYqpxMit4hQYpxr1EMhr97o7BetxH3OyZ3Lbep0r1s6XjpDZPtn\nOh486yd2p/0J/vk=\n-----END CERTIFICATE-----\n"}'
+        paladin3:
+          properties:
+            transport.grpc: '{"endpoint":"dns:///paladin3:9000","issuers":"-----BEGIN CERTIFICATE-----\nMIIDBzCCAe+gAwIBAgIUG6IUXC654yN/49L7XsF0os/dN10wDQYJKoZIhvcNAQEL\nBQAwEzERMA8GA1UEAwwIcGFsYWRpbjMwHhcNMjYwNjI0MDIxNjA3WhcNMzYwNjIx\nMDIxNjA3WjATMREwDwYDVQQDDAhwYWxhZGluMzCCASIwDQYJKoZIhvcNAQEBBQAD\nggEPADCCAQoCggEBALiDcAsKmaCVSbACLV9SanYrBsMCq3LGeENrWwZ8BzibIDv/\nXEw1vd5co22A3EM+JzQbOMs2Ma6MoE7yB9oHxBoJR+DSTON0MNkZMHaPAed7200B\nL7zpYKxfW0t0YVqaukY8rJp6xn2dmSomJKiAAN0lNk+atmAsQtK54Pdz9yoRQvT+\nMWqehgBX7FpLOMCu49QGgHsUVabtSnEoXxLz5/1y+SJZrOmeiQgUxCRLMl59nxR0\nsX+iC/qxWQeX4hSbRjABSlr7Fz9C7imO10KP6TO45plrzeO1SZSSQxWEYnzOBkAe\n04tKLHZ5rfY7TsJXJtIfv7kjKtXvyrrGtCSPVfcCAwEAAaNTMFEwHQYDVR0OBBYE\nFKlwUY2Y/O7aIr8blfIlUnddGo8iMB8GA1UdIwQYMBaAFKlwUY2Y/O7aIr8blfIl\nUnddGo8iMA8GA1UdEwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAJx/Or0w\nZRZQV5H3J4/eABnxR0nSorU0pLiz48+y8OoEluFqKpEMSYEkB/1jOxVQm6FRHvtQ\ngxB5UwCnCUE2fjQ+v6BS/Zm/8fXXeU11GSeCyUxMEzAKqY6KhLRgXk2KSTWhTkFP\n9mDxUROtBKBG/Ampbl8u7kwamLvAOQdzdJHFjRCglOhWW1hqBh4PmPN0kdF0PUQI\n+COmgA+28GHoPGYrZVeX9kqz5zP/NGLrhebEYI0eCQJoLtAztUW1cKBOJEStDdnH\ns4l2q309SzMr1LVAac6y2o8CqvRiPvL7FZzyyvQAiNZqMWQ29wCN/5keESdyv732\nZa/Eez77zdZ/ix8=\n-----END CERTIFICATE-----\n"}'
+
+blockIndexer:
+  fromBlock: latest
+
+publicTxManager:
+  gasLimit:
+    gasEstimateFactor: 2.0

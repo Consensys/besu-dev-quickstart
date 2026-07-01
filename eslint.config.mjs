@@ -11,7 +11,9 @@ export default tseslint.config(
       "dist/**",
       "index.js",
       "besu-test-network/**",
-      "files/**"
+      "files/**",
+      "pente/**",
+      "**/typechain-types/**"
     ]
   },
   eslint.configs.recommended,

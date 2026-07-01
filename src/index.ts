@@ -30,6 +30,7 @@ export async function main(): Promise<void> {
       const args = await yargs(process.argv.slice(2)).options({
         networkType: { type: 'string', demandOption: true, choices:['public','private'], describe: 'Type of network to use.' },
         networkName: { type: 'string', demandOption: false, choices:['mainnet','hoodi','sepolia'], describe: 'Public network to connect to (required when networkType is public).' },
+        privacy: { type: 'boolean', demandOption: false, default: false, describe: 'Add paladin for privacy (required when networkType is private).' },
         otel: { type: 'boolean', demandOption: false, default: false, describe: 'Add Otel Collector spans to Grafana (private only).' },
         chainlens: { type: 'boolean', demandOption: false, default: false, describe: 'Enable the Chainlens explorer (private only).' },
         outputPath: { type: 'string', demandOption: false, default: './besu-test-network', describe: 'Location for config files.'}
@@ -43,6 +44,7 @@ export async function main(): Promise<void> {
       answers = {
         networkType: args.networkType,
         networkName: args.networkName,
+        privacy: args.privacy,
         otel: args.otel,
         chainlens: args.chainlens,
         outputPath: args.outputPath,

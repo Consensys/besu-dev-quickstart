@@ -86,3 +86,52 @@ loki.source.file "nimbus_scraper" {
   targets    = local.file_match.nimbus_files.targets
   forward_to = [loki.process.nimbus_pipeline.receiver]
 }
+
+// ==========================================
+// 4. PALADIN PIPELINE
+// ==========================================
+
+// Discover all containers whose name contains "paladin"
+discovery.docker "paladin_containers" {
+  host = "unix:///var/run/docker.sock"
+  filter {
+    name   = "name"
+    values = ["paladin"]
+  }
+}
+
+// Strip the leading "/" Docker prepends to container names, expose as "node" label
+discovery.relabel "paladin_targets" {
+  targets = discovery.docker.paladin_containers.targets
+
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.+)"
+    target_label  = "node"
+  }
+}
+
+// Parse JSON log lines and promote level to a searchable label
+loki.process "paladin_pipeline" {
+  forward_to = [loki.write.local_loki.receiver]
+
+  stage.json {
+    expressions = {
+      level = "level",
+      msg   = "msg",
+    }
+  }
+
+  stage.labels {
+    values = {
+      level = "level",
+    }
+  }
+}
+
+loki.source.docker "paladin_scraper" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.relabel.paladin_targets.output
+  forward_to = [loki.process.paladin_pipeline.receiver]
+  labels     = { job = "paladin" }
+}
