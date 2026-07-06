@@ -84,6 +84,12 @@ const _otelQuestion: QuestionTree = {
 };
 _otelQuestion.transformerValidator = _getYesNoValidator(_otelQuestion, _chainlensQuestion, "n");
 
+const _privacyQuestion: QuestionTree = {
+    name: "privacy",
+    prompt: "Add privacy (using paladin) to the network? Default: [N/y]",
+};
+_privacyQuestion.transformerValidator = _getYesNoValidator(_privacyQuestion, _otelQuestion, "n");
+
 const _networkNameQuestion: QuestionTree = {
     name: "networkName",
     prompt: "Which public network do you want to connect to? Default: [1]",
@@ -124,7 +130,7 @@ export const rootQuestion: QuestionTree = {
     name: "networkType",
     prompt: `${bannerText}${leadInText}What type of network would you like the client to run? Default: [1]`,
     options: [
-        { label: "Private", value: "private", nextQuestion: _otelQuestion, default: true },
+        { label: "Private", value: "private", nextQuestion: _privacyQuestion, default: true },
         { label: "Public", value: "public", nextQuestion: _networkNameQuestion }
     ]
 };

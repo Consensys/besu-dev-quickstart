@@ -10,3 +10,4 @@ logs/
 /volumes/
 .DS_Store
 besu-test-network/*
+paladin

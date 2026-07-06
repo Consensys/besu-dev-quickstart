@@ -1,6 +1,7 @@
 const secp256k1 = require('secp256k1');
 const keccak = require('keccak');
 const { randomBytes } = require('crypto');
+const { execSync } = require('child_process');
 const fs = require('fs');
 const Wallet = require('ethereumjs-wallet');
 const yargs = require('yargs/yargs');
@@ -53,10 +54,28 @@ function generateNodeData() {
 }
 
 /**
- *
- * @param password
+ * @param {string} nodeName - used as the TLS certificate CN (e.g. "paladin1")
  */
-async function main(password) {
+function generatePaladinCert(nodeName) {
+  console.log(`generating Paladin TLS cert for ${nodeName}...`);
+  execSync(
+    `openssl req -x509 -newkey rsa:2048 \
+      -keyout paladin.key \
+      -out    paladin.crt \
+      -days 3650 -nodes \
+      -subj "/CN=${nodeName}"`,
+    { stdio: 'inherit' }
+  );
+  // Paladin container runs as UID 1001 — key must be world-readable
+  fs.chmodSync('paladin.key', 0o644);
+}
+
+/**
+ *
+ * @param {string} password
+ * @param {string|undefined} nodeName
+ */
+async function main(password, nodeName) {
 
   // generate nodekeys
   generateNodeData();
@@ -68,6 +87,12 @@ async function main(password) {
   fs.writeFileSync("accountKeystore", JSON.stringify(v3keystore));
   fs.writeFileSync("accountPrivateKey", wallet.getPrivateKeyString());
   fs.writeFileSync("accountPassword", password);
+
+  // generate Paladin TLS cert if a node name was supplied
+  if (nodeName) {
+    generatePaladinCert(nodeName);
+  }
+
   return {
     privateKey: wallet.getPrivateKeyString(),
     keystore: JSON.stringify(v3keystore),
@@ -77,9 +102,10 @@ async function main(password) {
 
 try {
   const args = yargs(process.argv.slice(2)).options({
-    password: { type: 'string', demandOption: false, default: '', describe: 'Password for the account' }
+    password: { type: 'string', demandOption: false, default: '', describe: 'Password for the account' },
+    node: { type: 'string', demandOption: false, describe: 'Node name for Paladin TLS certificate CN (e.g. paladin1)' }
   }).argv;
-  main(args.password);
+  main(args.password, args.node);
 } catch {
   console.error(e);
 }

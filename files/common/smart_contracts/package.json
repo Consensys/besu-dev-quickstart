@@ -1,0 +1,28 @@
+{
+  "name": "besu-paladin-smart-contracts",
+  "version": "1.0.0",
+  "scripts": {
+    "precompile": "node scripts/paladin_bootstrap/get_abis.mjs",
+    "compile": "hardhat compile",
+    "public-tx": "ts-node scripts/public/public_tx.ts",
+    "pente-tx": "ts-node scripts/privacy/pente_tx.ts",
+    "noto-tx": "ts-node scripts/privacy/noto_tx.ts",
+    "zeto-tx": "ts-node scripts/privacy/zeto_tx.ts",
+    "deploy-pente-factory": "ts-node scripts/paladin_bootstrap/deploy_pente_factory.ts",
+    "deploy-noto-factory": "ts-node scripts/paladin_bootstrap/deploy_noto_factory.ts",
+    "deploy-zeto-factory": "ts-node scripts/paladin_bootstrap/deploy_zeto_factory.ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
+    "hardhat": "^2.22.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@lfdecentralizedtrust/paladin-sdk": "latest",
+    "ethers": "^6.13.0"
+  }
+}

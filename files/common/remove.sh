@@ -30,12 +30,6 @@ echo "Stop and remove network..."
 docker compose down -v
 docker compose rm -sfv
 
-if [ -f "docker-compose-deps.yml" ]; then
-    echo "Stopping dependencies..."
-    docker compose -f docker-compose-deps.yml down -v
-    docker compose rm -sfv
-fi
-
 # pet shop dapp
 if [[ ! -z `docker ps -a | grep besu-dev-quickstart_pet_shop` ]]; then
   docker stop besu-dev-quickstart_pet_shop
