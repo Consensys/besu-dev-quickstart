@@ -36,8 +36,8 @@ x-paladin-def:
 
 x-postgres-def:
   &postgres-def
-  image: postgres:17.6
-  command: -c 'max_connections=200'
+  image: postgres:17.6-alpine
+  command: -c 'max_connections=50' -c 'shared_buffers=64MB' -c 'work_mem=2MB' -c 'maintenance_work_mem=16MB'
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U postgres"]
     interval: 5s
