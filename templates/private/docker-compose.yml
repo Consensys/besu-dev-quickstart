@@ -319,7 +319,7 @@ services:
 
   paladin3:
     << : *paladin-def
-    container_name: paladin2
+    container_name: paladin3
     depends_on:
       member3-postgres:
         condition: service_healthy
@@ -345,6 +345,7 @@ services:
 
   chainlensapi:
     image: web3labs/epirus-free-api:latest
+    platform: linux/amd64
     container_name: chainlensapi
     environment:
       - NODE_ENDPOINT=http://rpcnode:8545
@@ -363,6 +364,7 @@ services:
 
   chainlensmongodb:
     image: mongo:5.0.8
+    platform: linux/amd64
     container_name: chainlensmongodb
     environment:
       - COMPOSE_HTTP_TIMEOUT=900
@@ -382,6 +384,7 @@ services:
 
   chainlensweb:
     image: web3labs/epirus-free-web:latest
+    platform: linux/amd64
     container_name: chainlensweb
     environment:
       - API_URL=/api
@@ -395,6 +398,7 @@ services:
 
   chainlensingestion:
     image: web3labs/epirus-free-ingestion:latest
+    platform: linux/amd64
     container_name: chainlensingestion
     environment:
       - NODE_ENDPOINT=http://rpcnode:8545
